@@ -6,7 +6,7 @@ var client = new net.Socket();
 const parser = new XMLParser();
 const incommingStream = new stream.PassThrough();
 let globalMessageCounter = 0;
-function initClient() {
+export function initClient() {
 	client.connect(80, '192.168.2.1',async function () {
 		console.log('Connected');
 	
@@ -17,11 +17,11 @@ function initClient() {
 	
 		await initSymTable()
 	
-		await moveToBlue();
+		/*await moveToBlue();
 		await moveToColumn(1);
 	
 		await moveToRed();
-		await moveToColumn(1)
+		await moveToColumn(1)*/
 	
 
 	});
@@ -47,9 +47,8 @@ function initClient() {
 	});
 }
 
-initClient();
 
-async function moveToBlue() {
+export async function moveToBlue() {
 
 	console.log("Moving to blue");
 
@@ -57,7 +56,7 @@ async function moveToBlue() {
 	await movementDone();
 }
 
-async function moveToRed() {
+export async function moveToRed() {
 
 	console.log("Moving to red");
 
@@ -65,7 +64,7 @@ async function moveToRed() {
 	await movementDone();
 }
 
-async function moveToColumn(column:number) {
+export async function moveToColumn(column:number) {
 
 	if(column != 1) {
 		throw new Error("Only column 1 is supported at the moment");
@@ -95,9 +94,9 @@ async function waitForVariablePolling(variable:string, value:string) {
 				clearInterval(id);
 				resolve(true);
 				let deltaTime = Date.now() - startTime;
-				console.write(` done Took ${deltaTime}ms\n`);
+				process.stdout.write(` done Took ${deltaTime}ms\n`);
 			}else{
-				console.write(".")
+				process.stdout.write(".")
 			}
 		}, 200);
 	});
@@ -132,7 +131,7 @@ async function writeVariableInProc(name: string, value: string) {
 
 }
 
-async function toggleGripper(on: boolean) {
+export async function toggleGripper(on: boolean) {
 	let messageId = getNextMessageId();
 	const setVariable = `<RSVCMD><clientStamp>${messageId}</clientStamp><symbolApi><writeSymbolValue><name>_IBIN_OUT[6]</name><value>${on?"1":"0"}</value></writeSymbolValue></symbolApi></RSVCMD>`;
 	client.write(setVariable);
