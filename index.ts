@@ -16,22 +16,18 @@ client.connect(80, '192.168.2.1',async function () {
 
 	await initSymTable()
 
+	await moveToBlue();
+	await moveToColumn(1);
 
-	await writeVariableInProc("IMOVE", "1");
 
-	console.log(await readVariableInProc("IMOVE"));
 
-	setInterval(async () => {
-		//await writeVariableInProc("IMOVE", globalMessageCounter.toString());
-		console.log(await readVariableInProc("IMOVE"));
-	}, 200);
 
 	//const enableGripper = "<RSVCMD><clientStamp>123</clientStamp><symbolApi><writeSymbolValue><name>_IBIN_OUT[6]</name><value>0</value></writeSymbolValue></symbolApi></RSVCMD>";
 	//client.write(enableGripper);
 });
 
 client.on('data', function (data) {
-	console.log('Received: ' + data);
+	//console.log('Received: ' + data);
 
 	//seperate data string after </RSVRES> and process each
 	const dataString = data.toString();
@@ -50,6 +46,47 @@ client.on('close', function () {
 	console.log('Connection closed');
 });
 
+async function moveToBlue() {
+	await writeVariableInProc("IMOVE", "1");
+	await movementDone();
+}
+
+async function moveToRed() {
+	await writeVariableInProc("IMOVE", "2");
+	await movementDone();
+}
+
+async function moveToColumn(column:number) {
+
+	if(column != 1) {
+		throw new Error("Only column 1 is supported at the moment");
+	}
+
+	//if(column < 0 || column > 6) {
+	//	throw new Error("Column must be between 0 and 6");
+	//}
+
+	await writeVariableInProc("IMOVE", (11+column).toString());
+	await movementDone();
+}
+
+async function movementDone() {
+	await waitForVariablePolling("IMOVE", "0");
+}
+
+async function waitForVariablePolling(variable:string, value:string) {
+	return new Promise((resolve, reject) => {
+		const id = setInterval(async () => {
+			const currentValue = await readVariableInProc(variable);
+			if(currentValue.toString() === value) {
+				clearInterval(id);
+				resolve(true);
+			}else{
+				console.log("moving...")
+			}
+		}, 200);
+	});
+}
 
 async function readVariableInProc(name: string): Promise<string> {
 	let messageId = getNextMessageId();
